@@ -1,0 +1,71 @@
+
+services:
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - 5433:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/sql:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    networks:
+      - iot-network
+
+  python:
+    image: python:3.12-slim
+    container_name: fake_generator
+    build:
+      context: ./data_generator
+    restart: always
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - iot-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/config.ini:/etc/grafana/config.ini
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    links:
+      - postgres
+    networks:
+      - iot-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/grafana.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - iot-network
+    depends_on:
+      - grafana
+    restart: always
+
+    
+volumes:
+  grafana-data: {}
+  postgres-data: {}
+
+networks:
+  iot-network:

@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+
+    -   name: postgres-sensors
+        type: postgres
+        url: postgres:5432 #name_container:port
+        user: ${DATABASE_USER}
+        secureJsonData:
+            password: ${DATABASE_PASSWORD}
+            # tlsCACert: 
+            # tlsClientCert:
+            # tlsClientKey: 
+        jsonData:
+            database: ${DATABASE_NAME}
+            sslmode: 'disable' # 'verify-full'
+            maxOpenConns: 100
+            maxIdleConns: 100
+            connMaxLifeTime: 14400
+            postgresVersion: 1600
+            timescaledb: false
